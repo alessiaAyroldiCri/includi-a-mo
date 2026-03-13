@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Includi(A)MO - CRI Molfetta</title>
+    
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <link rel="stylesheet" href="css/style.css">
+    
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <section id="page-home" class="page active">
+        <div class="logo-wrapper">
+            <img src="assets/logo/logo.png" alt="Includi(A)MO Logo" class="main-logo">
+        </div>
+
+        <div class="controls-container">
+    <div class="input-row">
+        <input type="text" id="username" placeholder="Il tuo nome" class="pop-input">
+        
+        <select id="user-age" class="pop-input select-age">
+            <option value="" disabled selected>Età</option>
+            <option value="under18">-18</option>
+            <option value="18-30">18-30</option>
+            <option value="31-50">31-50</option>
+            <option value="over50">50+</option>
+            <option value="no-answer">N.D.</option>
+        </select>
+    </div>
+
+    <button class="btn-start" onclick="validaEInizia()">
+        INIZIAMO
+    </button>
+    </div>
+    </section>
+
+    <section id="page-quiz" class="page">
+        <header class="pop-header">
+            <button class="btn-home" onclick="showPage('page-home')">
+                <span class="icon">🏠</span> HOME
+            </button>
+            <h1 class="header-title">Scegli la sfida</h1>
+        </header>
+
+        <main class="quiz-container">
+            <div class="quiz-grid">
+                
+                <button class="quiz-card" onclick="startQuiz('genere')">
+                    <div class="card-icon">
+                        <img src="assets/icone/genere.png" alt="Genere">
+                    </div>
+                    <div class="card-label">GENERE</div>
+                </button>
+
+                <button class="quiz-card" onclick="startQuiz('lgbt')">
+                    <div class="card-icon">
+                        <img src="assets/icone/LGBTQ.png" alt="LGBTQ+">
+                    </div>
+                    <div class="card-label">LGBTQ+</div>
+                </button>
+
+                <button class="quiz-card" onclick="startQuiz('multi')">
+                    <div class="card-icon">
+                        <img src="assets/icone/multiculturalita.png" alt="Multiculturalità">
+                    </div>
+                    <div class="card-label">ETNIE</div>
+                </button>
+
+                <button class="quiz-card" onclick="startQuiz('neuro')">
+                    <div class="card-icon">
+                        <img src="assets/icone/neurodiverista.png" alt="Neurodiversità">
+                    </div>
+                    <div class="card-label">NEURODIVERSITÀ</div>
+                </button>
+
+            </div>
+        </main>
+
+        <div style="display: flex; gap: 10px; margin-top: 30px; justify-content: center;">
+    <button onclick="debugSimulaTutto(100)" style="font-size: 0.6rem; opacity: 0.5; padding: 5px;">Test 100%</button>
+    <button onclick="debugSimulaTutto(75)" style="font-size: 0.6rem; opacity: 0.5; padding: 5px;">Test 75%</button>
+    <button onclick="debugSimulaTutto(40)" style="font-size: 0.6rem; opacity: 0.5; padding: 5px;">Test 40%</button>
+</div>
+
+        <footer class="pop-footer">
+            <p>CRI Molfetta - Progetto Inclusione 2026</p>
+        </footer>
+    </section>
+
+   <section id="page-action" class="page">
+    <header class="pop-header">
+        <button class="btn-home" onclick="showPage('page-quiz')">
+            <span class="icon">🏠</span> HOME
+        </button>
+        <h1 id="game-title" class="header-title">Lo conosci?</h1>
+    </header>
+
+    <div class="progress-container">
+        <div id="progress-bar" class="progress-fill"></div>
+    </div>
+
+    <main class="game-area">
+        <div class="text-display">
+            <span id="main-content">CARICAMENTO...</span>
+        </div>
+        
+        <div id="options-grid" class="options-container"></div>
+
+        <div id="skip-wrapper" class="skip-wrapper">
+            <button class="btn-skip" onclick="prossimaDomanda()">
+                SALTA <br>
+                <small>NON CONOSCO QUESTA ESPRESSIONE</small>
+            </button>
+        </div>
+    </main>
+</section>
+
+<section id="page-profile" class="page">
+    <header class="pop-header">
+        <h1 class="header-title">Il tuo Profilo</h1>
+    </header>
+    <main class="pop-main card-container" style="display: flex; justify-content: center; align-items: center; padding: 20px;">
+        <div class="box-completato" style="text-align: center; max-width: 400px; width: 100%;">
+            <div id="profilo-emoji" style="font-size: 5rem; margin-bottom: 15px;">👑</div>
+            <h2 id="profilo-nome" style="color: var(--cri-red); font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; text-transform: uppercase;">L'AMBASCIATORE</h2>
+            <p id="profilo-descrizione" style="font-size: 1.1rem; margin-bottom: 25px; line-height: 1.4;">Sei un punto di riferimento per l'inclusione!</p>
+            
+            <div style="background: white; padding: 20px; border-radius: 15px; border: 2px solid #eee; margin-bottom: 30px; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05);">
+                <p style="font-weight: 800; text-transform: uppercase; font-size: 0.9rem; color: #555; letter-spacing: 1px;">Inclusività Totale Media:</p>
+                <div style="font-size: 4rem; font-weight: 900; color: var(--cri-red); line-height: 1;" id="profilo-percentuale">90%</div>
+            </div>
+
+            <div style="display: flex; justify-content: center; width: 100%;">
+                <button class="btn-ricomincia" onclick="location.reload()">
+                    <span class="icon">🔄</span> RICOMINCIA PERCORSO
+                </button>
+            </div>
+        </div>
+    </main>
+</section>
+
+<div id="modal-spiegazione" class="modal-overlay">
+    <div class="modal-content">
+        <h2 id="modal-termine">TERMINE</h2>
+        <p id="modal-testo">Qui apparirà la spiegazione presa dallo Sheet.</p>
+        <button class="btn-start btn-modal-action" style="display:none;" onclick="chiudiModale()">HO CAPITO!</button>
+        <button class="btn-start btn-continua-percorso" style="display:none; margin-top:10px;" onclick="chiudiModale()">CONTINUA IL PERCORSO</button>
+    </div>
+</div>
+
+    <script src="js/api-handler.js"></script>
+    <script src="js/quiz-engine.js"></script>
+    <script src="js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+</body>
+</html>

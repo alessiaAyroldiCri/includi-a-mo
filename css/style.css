@@ -1,0 +1,542 @@
+/* ==========================================
+   VARIABILI E RESET (Alta Leggibilità)
+   ========================================== */
+:root {
+    --cri-red: #d71920;
+    --pop-black: #1a1a1a;
+    --pop-white: #ffffff;
+    --pop-shadow: 10px 10px 0px var(--pop-black);
+    --pop-shadow-small: 5px 5px 0px var(--pop-black);
+    --pop-hover-shadow: 14px 14px 0px var(--pop-black);
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: 0.02em; /* Migliora la lettura */
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    /* Font Lexend per massima accessibilità */
+    font-family: 'Lexend', sans-serif;
+    background-color: var(--pop-white);
+    overflow: hidden;
+}
+
+/* ==========================================
+   PAGINE E ANIMAZIONI
+   ========================================== */
+.page {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.page.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================
+   PAGINA 1: HOME (Layout Proporzionato)
+   ========================================== */
+#page-home {
+    justify-content: space-between;
+}
+
+/* Il logo occupa il 60% dell'altezza */
+.logo-wrapper {
+    width: 100%;
+    flex: 0 0 60vh; 
+    display: flex;
+    align-items: center; 
+    justify-content: center;
+    padding: 30px;
+}
+
+.main-logo {
+    width: 100%;
+    height: 200%;
+    max-width: 2100px;
+    max-height: 90vh;
+    object-fit: contain; /* Mantiene le proporzioni originali */
+}
+
+/* I comandi occupano il restante 40% */
+.controls-container {
+    width: 100%;
+    flex: 0 0 40vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 100px;
+    z-index: 10;
+}
+
+/* TEXTBOX */
+.pop-input {
+    width: 85%;
+    max-width: 500px;
+    padding: 18px;
+    font-size: 1.6rem;
+    border: 6px solid var(--cri-red);
+    border-radius: 25px;
+    box-shadow: var(--pop-shadow-small);
+    text-align: center;
+    margin-bottom: 25px;
+    outline: none;
+    font-family: inherit;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.pop-input:focus {
+    transform: scale(1.02);
+    border-color: var(--pop-black);
+}
+
+.pop-input:focus::placeholder {
+    color: transparent; /* Scompare al click */
+}
+
+/* BOTTONE INIZIAMO */
+.btn-start {
+    width: 85%;
+    max-width: 500px;
+    background-color: var(--cri-red);
+    color: white;
+    font-size: 2.2rem;
+    padding: 18px;
+    border: 6px solid var(--pop-black);
+    border-radius: 100px;
+    cursor: pointer;
+    box-shadow: var(--pop-shadow);
+    text-transform: uppercase;
+    font-weight: 800;
+    font-family: inherit;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-start:hover {
+    transform: scale(1.05) translateY(-5px);
+    box-shadow: var(--pop-hover-shadow);
+}
+
+.btn-start:active {
+    transform: scale(0.92) translate(4px, 4px);
+    box-shadow: 4px 4px 0px var(--pop-black);
+}
+
+/* ==========================================
+   PAGINA 2: DASHBOARD (Griglia 2 Colonne)
+   ========================================== */
+#page-quiz {
+    padding: 20px;
+    justify-content: flex-start;
+}
+
+.pop-header {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin-bottom: 30px;
+    padding-top: 10px;
+}
+
+.btn-home {
+    position: absolute;
+    left: 10px;
+    border: 4px solid var(--pop-black);
+    background: white;
+    padding: 10px 15px;
+    border-radius: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 4px 4px 0px var(--pop-black);
+    transition: all 0.2s;
+}
+
+.btn-home:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px var(--pop-black);
+}
+
+.header-title {
+    background: var(--cri-red);
+    color: white;
+    padding: 10px 20px;
+    border: 4px solid var(--pop-black);
+    transform: rotate(-1.5deg);
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.quiz-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.quiz-card {
+    background: white;
+    border: 5px solid var(--cri-red);
+    border-radius: 25px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--pop-shadow-small);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.quiz-card:hover {
+    transform: scale(1.05) rotate(1deg);
+    border-color: var(--pop-black);
+}
+
+.quiz-card:active {
+    transform: scale(0.9) translateY(5px);
+}
+
+.card-icon img {
+    max-width: 80%;
+    max-height: 80%;
+    object-fit: contain;
+}
+
+.card-label {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-top: 10px;
+    color: var(--pop-black);
+    text-align: center;
+}
+
+.pop-footer {
+    margin-top: auto;
+    padding-bottom: 20px;
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+/* Layout area di gioco */
+.game-area {
+    width: 90%;
+    max-width: 600px;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* La card con la parola */
+.text-display {
+    background: white;
+    border: 6px solid var(--pop-black);
+    padding: 40px 20px;
+    border-radius: 30px;
+    box-shadow: var(--pop-shadow-small);
+    text-align: center;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--cri-red);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+/* Bottoni SÌ */
+.btn-option.primary {
+    background: var(--cri-red);
+    color: white;
+    border: 4px solid var(--pop-black);
+    padding: 20px;
+    border-radius: 20px;
+    font-family: inherit;
+    font-size: 1.2rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 6px 6px 0px var(--pop-black);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-option.primary:active {
+    transform: translate(3px, 3px);
+    box-shadow: 2px 2px 0px var(--pop-black);
+}
+
+/* Wrapper per il tasto salta per distanziarlo */
+.skip-wrapper {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-skip {
+    background: #f0f0f0;
+    border: 4px solid #ccc;
+    color: #666;
+    padding: 12px 30px;
+    border-radius: 15px;
+    font-family: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.btn-skip small {
+    font-size: 0.7rem;
+    font-weight: 400;
+}
+
+/* MODALE SPIEGAZIONE */
+.modal-overlay {
+    display: none; /* Nascosto di base */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    padding: 30px;
+    border-radius: 30px;
+    border: 6px solid var(--pop-black);
+    box-shadow: 15px 15px 0px var(--cri-red);
+    text-align: center;
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+#modal-termine {
+    color: var(--cri-red);
+    font-size: 2rem;
+    margin-top: 0;
+}
+
+#modal-testo {
+    font-size: 1.3rem;
+    line-height: 1.5;
+    margin-bottom: 30px;
+}
+
+.shake {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+/* Effetto Dislessia Cattivo */
+.lettera-danzante {
+    display: inline-block;
+    transition: none; /* Rimuove la fluidità per rendere tutto più a scatti */
+    font-weight: 800;
+    margin: 0 1px;
+}
+
+.anim-1 { animation: dance1 0.3s steps(2, start) infinite; }
+.anim-2 { animation: dance2 0.5s steps(3, start) infinite; }
+.anim-3 { animation: dance3 0.4s steps(2, start) infinite; }
+
+@keyframes dance1 { 
+    0%, 100% { transform: rotate(0deg) scale(1); filter: blur(0px); } 
+    50% { transform: rotate(15deg) scale(1.1); filter: blur(1px); color: var(--cri-red); } 
+}
+
+@keyframes dance2 { 
+    0%, 100% { transform: scaleX(1); } 
+    50% { transform: scaleX(-1); } /* Specchia la lettera velocemente */
+}
+
+@keyframes dance3 { 
+    0%, 100% { transform: translateY(0); letter-spacing: 2px; } 
+    50% { transform: translateY(-8px); letter-spacing: -2px; } /* Le lettere si sovrappongono */
+}
+
+.progress-container {
+    width: 100%;
+    height: 12px;
+    background: #e0e0e0;
+    overflow: hidden;
+    border-bottom: 3px solid var(--pop-black);
+}
+
+.progress-fill {
+    width: 0%; /* Parte da zero */
+    height: 100%;
+    background: var(--cri-red);
+    transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+textarea.pop-input {
+    height: auto;
+    min-height: 100px;
+    font-family: 'Lexend', sans-serif;
+}
+
+/* Effetto Scossa (Shake) per risposte errate */
+.shake {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    background-color: var(--cri-red) !important;
+    color: white !important;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+/* Box per la frase problematica da correggere */
+.box-errore {
+    background: #fff3f3;
+    padding: 15px;
+    border-radius: 15px;
+    border: 3px dashed var(--cri-red);
+    margin-bottom: 20px;
+    text-align: left;
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+}
+
+/* Stile specifico per la textarea del gioco dislessia */
+textarea.pop-input {
+    height: auto;
+    min-height: 120px;
+    resize: none;
+    text-align: left;
+    line-height: 1.4;
+}
+
+/* --- NUOVE CLASSI PER IL PROFILO FINALE --- */
+
+/* Contenitore principale "pop-up" per il risultato finale */
+.box-completato {
+    background: #fff3f3; /* Un rosa chiarissimo per richiamare la CRI */
+    padding: 30px;
+    border-radius: 20px;
+    border: 4px solid var(--cri-red); /* Bordo spesso e rosso */
+    box-shadow: 8px 8px 0px var(--cri-dark-red); /* Ombra netta e scura */
+    position: relative;
+    overflow: hidden;
+    /* Animazione di entrata "pop" */
+    animation: popInCard 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+/* Effetto scossa/battito sull'emoji finale */
+#profilo-emoji {
+    display: inline-block;
+    animation: pulseEmoji 2s infinite;
+}
+
+/* --- STILE PER IL BOTTONE "RICOMINCIA" RIMPICCiolito --- */
+.btn-ricomincia {
+    background: white;
+    color: var(--cri-red);
+    border: 3px solid var(--cri-red);
+    padding: 12px 24px; /* Ridotto il padding per rimpicciolirlo */
+    border-radius: 100px; /* Bordi completamente arrotondati */
+    font-family: 'Lexend', sans-serif;
+    font-weight: 800;
+    font-size: 0.9rem; /* Testo leggermente più piccolo */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 4px 4px 0px var(--cri-red); /* Ombra netta rossa */
+    
+    /* MODIFICA FONDAMENTALE PER LA LARGHEZZA */
+    width: auto; /* Non occupa tutto lo spazio, ma solo quello del testo */
+    max-width: 250px; /* Larghezza massima limitata */
+}
+
+/* Effetto hover per il bottone ricomincia */
+.btn-ricomincia:hover {
+    transform: translate(2px, 2px); /* Si abbassa leggermente */
+    box-shadow: 2px 2px 0px var(--cri-red); /* L'ombra si riduce */
+    background: #fff0f0; /* Un leggero rosa di sfondo */
+}
+
+/* --- ANIMAZIONI --- */
+@keyframes pulseEmoji {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+@keyframes popInCard {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Contenitore per mettere gli input affiancati */
+.input-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    max-width: 400px; /* O la larghezza che preferisci */
+    margin-bottom: 15px;
+}
+
+/* Il campo nome prende più spazio */
+#username {
+    flex: 2;
+}
+
+/* La dropdown dell'età è più stretta */
+.select-age {
+    flex: 1;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ff0000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 15px;
+    appearance: none; /* Rimuove la freccia standard del browser */
+    padding-right: 30px;
+}
+
+/* Mobile: se lo schermo è troppo piccolo, li mette uno sotto l'altro */
+@media (max-width: 400px) {
+    .input-row {
+        flex-direction: column;
+    }
+    #username, .select-age {
+        width: 100%;
+    }
+}
