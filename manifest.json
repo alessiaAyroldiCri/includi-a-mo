@@ -11,7 +11,7 @@
       "src": "assets/tablet.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "start_url": "./index.html",
