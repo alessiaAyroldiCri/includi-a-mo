@@ -1,0 +1,5 @@
+.vscode/
+*.log
+
+# FILE DA IGNORARE SINGOLARMENTE
+ignoreFiles/

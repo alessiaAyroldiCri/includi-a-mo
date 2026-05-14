@@ -10,7 +10,7 @@ const ASSETS_TO_CACHE = [
   './manifest.json',
   './assets/logo/logo.png',
   './assets/icone/genere.png',
-  './assets/icone/LGBT+.png',
+  './assets/icone/LGBTQ.png',
   './assets/icone/multiculturalita.png',
   './assets/icone/neurodiverista.png'
 ];

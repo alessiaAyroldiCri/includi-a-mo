@@ -7,6 +7,11 @@ let utenteCorrente = "";
  */
 function showPage(pageId) {
     console.log("Navigazione verso:", pageId);
+
+    document.documentElement.style.setProperty('overflow-x', 'hidden', 'important');
+    document.documentElement.style.setProperty('overflow-y', 'auto', 'important');
+    document.body.style.setProperty('overflow-x', 'hidden', 'important');
+    document.body.style.setProperty('overflow-y', 'auto', 'important');
     
     // Nasconde tutte le pagine
     document.querySelectorAll('.page').forEach(page => {
@@ -19,6 +24,10 @@ function showPage(pageId) {
     if (targetPage) {
         targetPage.classList.add('active');
         targetPage.style.display = 'flex'; // Usa flex per mantenere il layout pop
+        targetPage.style.minHeight = '100vh';
+        targetPage.style.height = '100vh';
+        targetPage.style.setProperty('overflow-y', 'auto', 'important');
+        targetPage.style.setProperty('overflow-x', 'hidden', 'important');
     }
 }
 

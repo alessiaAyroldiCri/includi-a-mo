@@ -33,26 +33,32 @@ async function fetchQuizDati(categoria) {
 }
     if (categoria === 'lgbt') {
         return [
-            { 
-                Frase: "Marco è un 'ex donna'.", 
-                Corretta: "Marco è un uomo trans.",
-                Sbagliata: "Marco è una donna biologica.",
-                Sbagliata2: "Marco era una femmina.",
-                Spiegazione: "L'identità di genere attuale è l'unica che conta. 'Ex donna', 'biologica' o riferimenti al sesso assegnato alla nascita invalidano il percorso di affermazione della persona."
-            },
-            { 
-                Frase: "Qual è il tuo 'vero' nome?", 
-                Corretta: "Qual è il tuo nome elettivo?",
-                Sbagliata: "Come ti chiamavi da piccola?",
-                Sbagliata2: "Qual è il tuo nome all'anagrafe?",
-                Spiegazione: "Chiedere il nome di nascita (deadname) o quello anagrafico è un'intrusione dolorosa. Il nome 'vero' è quello in cui la persona si riconosce."
-            },
-            { 
-                Frase: "Invitiamo i soci con le loro 'mogli'.", 
-                Corretta: "Invitiamo i soci con i loro partner.",
-                Sbagliata: "Invitiamo i soci con le consorti.",
-                Sbagliata2: "Invitiamo i soci e le signore.",
-                Spiegazione: "Termini come 'mogli', 'consorti' o 'signore' assumono che la coppia sia eterosessuale. 'Partner' è universale e non esclude nessuno."
+            {
+                tipo: "matching",
+                termini: [
+                    { id: 1, nome: "ASESSUALE" },
+                    { id: 2, nome: "BISESSUALE" },
+                    { id: 3, nome: "CISGENDER" },
+                    { id: 4, nome: "ETEROSEXUALE" },
+                    { id: 5, nome: "NON BINARIO" },
+                    { id: 6, nome: "PANSESSUALE" },
+                    { id: 7, nome: "QUEER" },
+                    { id: 8, nome: "TRANSGENDER" },
+                    { id: 9, nome: "GRIGIO-SESSUALE" },
+                    { id: 10, nome: "GAY" }
+                ],
+                descrizioni: [
+                    { id: 1, testo: "PERSONA CHE NON PROVA ATTRAZIONE SESSUALE" },
+                    { id: 2, testo: "PERSONA CHE PROVA UN ORIENTAMENTO ROMANTICO E/O SESSUALE VERSO PIÙ DI UN GENERE" },
+                    { id: 3, testo: "PERSONA LA CUI IDENTITÀ DI GENERE CORRISPONDE AL SESSO ASSEGNATO ALLA NASCITA" },
+                    { id: 4, testo: "UN UOMO CHE PROVA ATTRAZIONE VERSO LE DONNE, O UNA DONNA CHE PROVA ATTRAZIONE ROMANTICA VERSO UOMINI" },
+                    { id: 5, testo: "PERSONE CHE SI IDENTIFICANO NON SOLO COME MASCHI O FEMMINE E NON VOGLIORNO COLLOCARSI TRA MASCHI E FEMMINE" },
+                    { id: 6, testo: "PERSONA LA CUI ATTRAZIONE NON È LIMITATA DAL SESSO O DAL GENERE" },
+                    { id: 7, testo: "ETICHETTA USATA A CHI VUOLE RIFIUTARE L'ETICHETTATURA DELL'ORIENTAMENTO SESSUALE E/O DELL'IDENTITÀ DI GENERE" },
+                    { id: 8, testo: "PERSONA LA CUI IDENTITÀ DI GENERE O ESPRESSIONE DI GENERE NON CORRISPONDE AL SESSO ASSEGNATO ALLA NASCITA" },
+                    { id: 9, testo: "PERSONE CHE PROVANO ATTRAZIONE OCCASIONALMENTE, RARAMENTE O SOLO IN DETERMINATE CONDIZIONI" },
+                    { id: 10, testo: "UOMO CHE PROVA ATTRAZIONE VERSO GLI UOMINI" }
+                ]
             }
         ];
     }
