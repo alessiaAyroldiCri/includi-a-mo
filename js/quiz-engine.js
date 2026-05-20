@@ -2,7 +2,7 @@ let statisticheGlobali = {
     genere: { punti: 0, totali: 0 },
     neuro: { punti: 0, totali: 0 },
     lgbt: { punti: 0, totali: 0 },
-    multi: { punti: 0, totali: 0 }
+    video_interactive: { punti: 0, totali: 0 }
 };
 
 let domandeCorrenti = [];
@@ -12,63 +12,222 @@ let punteggioTotale = 0;
 let timerDislessia;
 let caosInterval;
 const REPORT_STORAGE_KEY = 'includiamo_report_records';
+// Session report corrente (inizializzato al primo utilizzo)
 let sessioneReportCorrente = null;
-let testoNeuroCorrente = "";
 
-function inizializzaSessioneReport() {
+function initSessioneReport() {
     if (sessioneReportCorrente) return;
-
-    const utente = window.utenteLoggato || { nome: 'Sconosciuto', eta: 'Non specificata' };
     sessioneReportCorrente = {
-        sessionId: `sess-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        sessionId: 's-' + Date.now(),
+        nome: (window.utenteLoggato && window.utenteLoggato.nome) || 'Anonimo',
+        etaRange: (window.utenteLoggato && window.utenteLoggato.eta) || '',
         timestamp: new Date().toISOString(),
-        nome: utente.nome,
-        etaRange: utente.eta,
-        completato: false,
         minigiochi: {
-            genere: { risposte: [], punti: 0, totali: 0 },
-            neuro: { risposte: [], punti: 0, totali: 0 },
-            lgbt: { risposte: [], punti: 0, totali: 0 },
-            multi: { risposte: [], punti: 0, totali: 0 }
-        }
+            genere: { punti: 0, totali: 0 },
+            neuro: { punti: 0, totali: 0 },
+            lgbt: { punti: 0, totali: 0 },
+            video_interactive: { punti: 0, totali: 0 }
+        },
+        completato: false
     };
 }
 
 function salvaSessioneReport() {
-    if (!sessioneReportCorrente) return;
-
-    const lista = JSON.parse(localStorage.getItem(REPORT_STORAGE_KEY) || '[]');
-    const idx = lista.findIndex(item => item.sessionId === sessioneReportCorrente.sessionId);
-
-    if (idx >= 0) {
-        lista[idx] = sessioneReportCorrente;
-    } else {
-        lista.push(sessioneReportCorrente);
+    initSessioneReport();
+    try {
+        const lista = JSON.parse(localStorage.getItem(REPORT_STORAGE_KEY) || '[]');
+        const idx = lista.findIndex(r => r.sessionId === sessioneReportCorrente.sessionId);
+        if (idx >= 0) lista[idx] = sessioneReportCorrente;
+        else lista.push(sessioneReportCorrente);
+        localStorage.setItem(REPORT_STORAGE_KEY, JSON.stringify(lista));
+    } catch (err) {
+        console.warn('Impossibile salvare sessioneReportCorrente:', err);
     }
-
-    localStorage.setItem(REPORT_STORAGE_KEY, JSON.stringify(lista));
 }
 
-function registraRispostaMinigioco(categoria, risposta) {
-    inizializzaSessioneReport();
-    if (!sessioneReportCorrente || !sessioneReportCorrente.minigiochi[categoria]) return;
-    sessioneReportCorrente.minigiochi[categoria].risposte.push(risposta);
+function registraRispostaMinigioco(categoria, dati) {
+    try {
+        initSessioneReport();
+        if (!sessioneReportCorrente.risposte) {
+            sessioneReportCorrente.risposte = {};
+        }
+        if (!sessioneReportCorrente.risposte[categoria]) {
+            sessioneReportCorrente.risposte[categoria] = [];
+        }
+        sessioneReportCorrente.risposte[categoria].push(dati);
+        salvaSessioneReport();
+    } catch (err) {
+        console.warn('Errore nella registrazione risposta:', err);
+    }
 }
 
-async function startQuiz(categoria) {
-    inizializzaSessioneReport();
-    categoriaCorrente = categoria;
-    indiceDomanda = 0;
-    punteggioTotale = 0;
-    domandeCorrenti = await fetchQuizDati(categoria);
-    
-    if (domandeCorrenti && domandeCorrenti.length > 0) {
-        showPage('page-action');
+    // Gestione della sequenza di video-interactive (due parti con overlay e opzioni)
+    async function gestisciVideoSequence(startIndex) {
+        const questionContainer = document.querySelector('.question-container');
+        const standardOptions = document.getElementById('options-grid');
+        const skipWrapper = document.getElementById('skip-wrapper');
+        const title = document.getElementById('game-title');
+        const display = document.getElementById('main-content');
+        const videoContainer = document.getElementById('video-game-container');
+        const player = document.getElementById('interactive-player');
+        const overlay = document.getElementById('video-overlay');
+        const questionText = document.getElementById('overlay-question-text');
+        const optionsGrid = document.getElementById('video-options-grid');
+
+        if (questionContainer) questionContainer.style.display = 'none';
+        if (standardOptions) standardOptions.style.display = 'none';
+        if (skipWrapper) skipWrapper.style.display = 'none';
+        if (videoContainer) videoContainer.classList.remove('hidden');
+        if (title) title.innerText = 'MULTICULTURALITÀ';
+        if (display) display.textContent = '';
+        if (overlay) overlay.classList.add('hidden');
+
+        if (!player || !overlay || !questionText || !optionsGrid) {
+            console.warn('Elementi video quiz mancanti nel DOM.');
+            return;
+        }
+
+        const entraInFullscreen = async () => {
+            if (!videoContainer || document.fullscreenElement) return;
+            try { if (videoContainer.requestFullscreen) await videoContainer.requestFullscreen(); } catch (err) { console.warn('Fullscreen non disponibile:', err); }
+        };
+
+        const playQuestion = (domanda) => new Promise((resolve) => {
+            const onPart1Ended = () => {
+                player.removeEventListener('ended', onPart1Ended);
+                if (overlay) overlay.classList.remove('hidden');
+                questionText.textContent = domanda.question || domanda.Frase || '';
+                optionsGrid.innerHTML = '';
+
+                domanda.options.forEach((opzione) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'video-option-btn';
+                    button.textContent = opzione;
+                    button.dataset.correct = String(opzione === domanda.correctAnswer);
+
+                    const onClick = () => {
+                        const isCorrect = button.dataset.correct === 'true';
+                        if (overlay) overlay.classList.add('hidden');
+
+                        const onPart2Ended = () => {
+                            player.removeEventListener('ended', onPart2Ended);
+                            resolve(isCorrect);
+                        };
+
+                        player.addEventListener('ended', onPart2Ended);
+                        player.pause();
+                        player.currentTime = 0;
+                        player.src = domanda.videoPart2 || domanda.videoPart1;
+                        player.load();
+                        player.play().catch(err => console.warn('Impossibile avviare la seconda parte:', err));
+                    };
+
+                    button.addEventListener('click', onClick, { once: true });
+                    optionsGrid.appendChild(button);
+                });
+            };
+
+            player.addEventListener('ended', onPart1Ended, { once: true });
+            player.pause();
+            player.currentTime = 0;
+            player.src = domanda.videoPart1;
+            player.load();
+            player.play().then(() => entraInFullscreen()).catch(err => console.warn('Impossibile avviare la parte1:', err));
+        });
+
+        const q1 = domandeCorrenti[startIndex];
+        const q2 = domandeCorrenti[startIndex + 1];
+        const risposte = [];
+
+        if (q1) {
+            const r1 = await playQuestion(q1);
+            risposte.push({ question: q1.question || q1.Frase || '', correct: r1 });
+        }
+        if (q2) {
+            const r2 = await playQuestion(q2);
+            risposte.push({ question: q2.question || q2.Frase || '', correct: r2 });
+        }
+
+        const puntiOttenuti = risposte.filter(r => r.correct).length;
+        punteggioTotale += puntiOttenuti;
+        statisticaAggiorna('video_interactive', puntiOttenuti, risposte.length);
+        registraRispostaMinigioco('video_interactive', { risposte, punti: puntiOttenuti, totali: risposte.length, timestamp: new Date().toISOString() });
+
+        const percent = Math.round((puntiOttenuti / (risposte.length || 1)) * 100);
+        const resultHtml = `
+            <div style="text-align:center;">
+                <h2 style="font-size: 2rem; margin: 6px 0;">${percent}%</h2>
+                <p style="font-weight:800; text-transform:uppercase;">Punteggio Video Quiz</p>
+                <p style="margin:10px 0; font-size:1.1rem;">Hai totalizzato <strong>${puntiOttenuti}</strong> su <strong>${risposte.length}</strong></p>
+                <div style="display:flex; gap:10px; justify-content:center; margin-top:12px; flex-wrap:wrap;">
+                    <button class="btn-option primary" onclick="entraFullscreenDaModal()" style="min-width:150px;">ENTRA A SCHERMO INTERO</button>
+                    <button class="btn-option primary" onclick="chiudiModale()" style="min-width:150px;">CONTINUA</button>
+                </div>
+            </div>
+        `;
+
+        if (document.fullscreenElement) {
+            try { await document.exitFullscreen(); } catch (err) { console.warn('Impossibile uscire dal fullscreen:', err); }
+        }
+
+        apriModale('Risultato', resultHtml, false);
+        indiceDomanda = startIndex + risposte.length;
         mostraDomanda();
     }
+// Funzione chiamata dal bottone nel modale per forzare il fullscreen sul contenitore video
+function entraFullscreenDaModal() {
+    const videoContainer = document.getElementById('video-game-container');
+    const player = document.getElementById('interactive-player');
+    if (!videoContainer) return;
+
+    const doRequest = async () => {
+        try {
+            if (videoContainer.requestFullscreen) await videoContainer.requestFullscreen();
+            else if (videoContainer.webkitRequestFullscreen) videoContainer.webkitRequestFullscreen();
+            // dopo il fullscreen, riproduci il video se è pronto
+            if (player) player.play().catch(err => console.warn('Play dopo fullscreen fallito:', err));
+        } catch (err) {
+            console.warn('Fullscreen fallito:', err);
+        }
+    };
+
+    doRequest();
 }
 
-function mostraDomanda() {
+// Helper per aggiornare statistiche globali in modo coerente
+function statisticaAggiorna(categoria, punti, totali) {
+    if (!statisticheGlobali[categoria]) statisticheGlobali[categoria] = { punti: 0, totali: 0 };
+    statisticheGlobali[categoria].punti += punti;
+    statisticheGlobali[categoria].totali += totali;
+    if (sessioneReportCorrente && sessioneReportCorrente.minigiochi[categoria]) {
+        sessioneReportCorrente.minigiochi[categoria].punti = (sessioneReportCorrente.minigiochi[categoria].punti || 0) + punti;
+        sessioneReportCorrente.minigiochi[categoria].totali = (sessioneReportCorrente.minigiochi[categoria].totali || 0) + totali;
+        salvaSessioneReport();
+    }
+}
+
+function resetVideoQuizUI() {
+    const videoContainer = document.getElementById('video-game-container');
+    const overlay = document.getElementById('video-overlay');
+    const player = document.getElementById('interactive-player');
+    const pageAction = document.getElementById('page-action');
+    const display = document.getElementById('main-content');
+
+    if (player) {
+        player.pause();
+        player.onended = null;
+        player.removeAttribute('src');
+        player.load();
+    }
+
+    if (overlay) overlay.classList.add('hidden');
+    if (videoContainer) videoContainer.classList.add('hidden');
+    if (pageAction) pageAction.classList.remove('video-mode');
+    if (display && display.textContent === '') display.textContent = 'CARICAMENTO...';
+}
+
+async function mostraDomanda() {
     // 1. Recuperiamo tutti i riferimenti necessari
     const questionContainer = document.querySelector('.question-container');
     const container = document.getElementById('options-grid');
@@ -78,6 +237,8 @@ function mostraDomanda() {
     const progressBar = document.getElementById('progress-bar');
     const betaWrapper = document.getElementById('beta-wrapper');
     const pageAction = document.getElementById('page-action');
+
+    resetVideoQuizUI();
 
     // 2. RIPRISTINO UI (Importante per far sparire la schermata Multiculturalità)
     if (questionContainer) questionContainer.style.display = 'block';
@@ -105,6 +266,11 @@ function mostraDomanda() {
     if (progressBar) progressBar.style.width = percentuale + "%";
 
     // --- LOGICA CATEGORIE ---
+
+    if (item.type === 'video_interactive' || categoriaCorrente === 'video_interactive') {
+        await gestisciVideoSequence(indiceDomanda);
+        return;
+    }
 
     // --- GENERE ---
     if (categoriaCorrente === 'genere') {
@@ -182,28 +348,6 @@ function mostraDomanda() {
         }
     }
 
-    // --- MULTICULTURALITÀ ---
-    else if (categoriaCorrente === 'multi') {
-        registraRispostaMinigioco('multi', {
-            tipo: 'accesso-sezione',
-            nota: 'Sezione non disponibile (work in progress)',
-            timestamp: new Date().toISOString()
-        });
-        titolo.innerText = "MULTICULTURALITÀ";
-        display.innerHTML = `
-            <div style="text-align: center; position: relative;">
-                <img src="assets/icone/workInProgress.png" 
-                     alt="Work in Progress" 
-                     style="width: 90%; max-width: 320px; border: 4px solid black; box-shadow: 10px 10px 0px black; border-radius: 20px;">
-                
-                <p style="margin-top: 25px; font-weight: 900; font-size: 1.1rem; color: black; text-transform: uppercase;">
-                    Sezione in arrivo...
-                </p>
-            </div>
-        `;
-        container.innerHTML = ``;
-        skipWrapper.style.display = "none";
-    }
 }
 
 function avviaGiocoDislessia(testoOriginale, tempo) {
@@ -384,6 +528,8 @@ function avviaGiocoMatching(termini, descrizioniMescolate, descrizioniOriginali,
 }
 
 function selezioneMatching(element, tipo, id) {
+    if (element.classList.contains('matched')) return;
+
     if (tipo === 'termine') {
         // Deseleziona il termine precedente
         const prevTermine = document.querySelector('.matching-item.termine-item.selected');
@@ -424,10 +570,6 @@ function creaMatching() {
     
     terminoEl.classList.add('matched');
     descrizioneEl.classList.add('matched');
-    
-    // Disabilita i click su elementi già matchati
-    terminoEl.onclick = null;
-    descrizioneEl.onclick = null;
     
     // Resetta la selezione
     terminoEl.classList.remove('selected');
@@ -633,11 +775,12 @@ function prossimaDomanda() {
 }
 
 function controllaSeTuttiCompletati() {
-    // Controlliamo se almeno 3 categorie su 4 hanno un punteggio (totali > 0)
+    // Controlliamo se tutte le 4 categorie hanno un punteggio (totali > 0)
     const categorieGiocate = Object.values(statisticheGlobali).filter(s => s.totali > 0).length;
     
-    // Per il TEST: impostiamo a 3 invece di 4
-    if (categorieGiocate === 3) {
+    // Completamento percorso: tutte le 4 categorie disponibili devono essere completate
+    // 1. genere, 2. neuro, 3. lgbt, 4. video_interactive (etnie)
+    if (categorieGiocate === 4) {
         mostraProfiloFinale();
     }
 }
@@ -775,7 +918,6 @@ function tornaAllaHome() {
         card.style.opacity = "0.6";
         card.style.border = "2px solid #2ecc71";
         card.innerHTML += " ✅";
-        card.onclick = null; 
     }
 
     controllaSeTuttiCompletati();
@@ -784,7 +926,7 @@ function tornaAllaHome() {
 // per DEBUG
 function debugSimulaTutto(punteggioPercentuale) {
     // Simuliamo 5 domande per ogni categoria
-    const categorie = ['genere', 'neuro', 'lgbt', 'multi'];
+    const categorie = ['genere', 'neuro', 'lgbt', 'video_interactive'];
     
     categorie.forEach(cat => {
         // Calcoliamo i punti in base alla percentuale che vogliamo testare
@@ -798,73 +940,6 @@ function debugSimulaTutto(punteggioPercentuale) {
 
     // Lanciamo la schermata finale che abbiamo costruito
     mostraProfiloFinale();
-}
-
-function mostraWorkInProgress() {
-    showPage('page-action'); 
-    
-    const display = document.getElementById('main-content');
-    const container = document.getElementById('options-grid');
-    const skipWrapper = document.getElementById('skip-wrapper');
-    const titolo = document.getElementById('game-title');
-    const questionContainer = document.querySelector('.question-container');
-    const progressBar = document.querySelector('.progress-fill');
-
-    // 1. Nascondiamo i pezzi del quiz che non servono
-    if (questionContainer) questionContainer.style.display = 'none';
-    if (container) container.style.display = 'none';
-    if (skipWrapper) skipWrapper.style.display = 'none';
-    display.innerHTML = ""; 
-
-    titolo.innerText = "MULTICULTURALITÀ";
-    if (progressBar) progressBar.style.width = "100%";
-
-    // 2. Creiamo il contenitore per l'immagine (se non esiste)
-    let betaWrapper = document.getElementById('beta-wrapper');
-    if (!betaWrapper) {
-        betaWrapper = document.createElement('div');
-        betaWrapper.id = 'beta-wrapper';
-        document.getElementById('page-action').appendChild(betaWrapper);
-    }
-    
-    betaWrapper.style.display = 'block';
-    
-    // 3. Layout con Tasto Home e Tasto Risultati
-    betaWrapper.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative;">
-            
-            <button onclick="location.reload()" class="btn-home-top" style="position: absolute; top: -10px; left: 10px;">
-                🏠 HOME
-            </button>
-
-            <div style="margin-top: 40px; text-align: center;">
-                <img src="assets/icone/workInProgress.png" 
-                     alt="Work in Progress" 
-                     style="width: 90%; max-width: 320px; border: 4px solid black; box-shadow: 10px 10px 0px black; border-radius: 20px;">
-                
-                <p style="margin-top: 25px; font-weight: 900; font-size: 1.1rem; color: black; text-transform: uppercase;">
-                    Sezione in arrivo...
-                </p>
-
-                <button onclick="terminaSessioneBeta()" class="btn-option primary" style="margin-top: 20px; width: auto; padding: 15px 30px;">
-                    COMPLETA IL TOUR
-                </button>
-            </div>
-        </div>
-    `;
-}
-
-// Questa funzione simula la fine del 3° quiz
-function terminaSessioneBeta() {
-    categoriaCorrente = 'multi';
-    punteggioTotale = 1;
-    domandeCorrenti = [{Frase: "Beta"}]; 
-
-    const betaWrapper = document.getElementById('beta-wrapper');
-    if (betaWrapper) betaWrapper.style.display = 'none';
-
-    // Chiama la funzione che mostra il punteggio e controlla se hai fatto i 3 quiz
-    fineGioco();
 }
 
 function calcolaProfilo(percentuale) {
@@ -912,10 +987,10 @@ function scaricaReportCompleto() {
         const g = r.minigiochi.genere || { punti: 0, totali: 0 };
         const n = r.minigiochi.neuro || { punti: 0, totali: 0 };
         const l = r.minigiochi.lgbt || { punti: 0, totali: 0 };
-        const m = r.minigiochi.multi || { punti: 0, totali: 0 };
-        
-        const totaliPunti = g.punti + n.punti + l.punti + m.punti;
-        const totaliDomande = g.totali + n.totali + l.totali + m.totali;
+        const e = r.minigiochi.video_interactive || { punti: 0, totali: 0 };
+
+        const totaliPunti = g.punti + n.punti + l.punti + e.punti;
+        const totaliDomande = g.totali + n.totali + l.totali + e.totali;
         const percentuale = totaliDomande > 0 ? Math.round((totaliPunti / totaliDomande) * 100) : 0;
         const profilo = calcolaProfilo(percentuale);
 
@@ -925,7 +1000,7 @@ function scaricaReportCompleto() {
             'Data/Ora': new Date(r.timestamp).toLocaleString('it-IT'),
             'GENERE (Punti/Totali)': `${g.punti}/${g.totali}`,
             'LGBTQ+ (Punti/Totali)': `${l.punti}/${l.totali}`,
-            'ETNIE (Punti/Totali)': `${m.punti}/${m.totali}`,
+            'ETNIE (Punti/Totali)': `${e.punti}/${e.totali}`,
             'NEURODIVERSITÀ (Punti/Totali)': `${n.punti}/${n.totali}`,
             'Punteggio Totale': `${totaliPunti}/${totaliDomande}`,
             'Inclusività (%)': percentuale + '%',
@@ -980,7 +1055,7 @@ function scaricaReportCompleto() {
         { Metrica: 'Percentuale Media Inclusività', Valore: stats.percentualMedia + '%' },
         { Metrica: 'Punteggio Medio GENERE', Valore: stats.genereMedia + '%' },
         { Metrica: 'Punteggio Medio LGBTQ+', Valore: stats.lgbtMedia + '%' },
-        { Metrica: 'Punteggio Medio ETNIE', Valore: stats.multiMedia + '%' },
+        { Metrica: 'Punteggio Medio ETNIE', Valore: stats.etnieMedia + '%' },
         { Metrica: 'Punteggio Medio NEURODIVERSITÀ', Valore: stats.neuroMedia + '%' },
         { Metrica: '', Valore: '' },
         { Metrica: 'Distribuzione per Fascia Età', Valore: '' },
@@ -1011,37 +1086,102 @@ function scaricaReportCompleto() {
 function calcolaStatistiche(records) {
     let totGenere = 0, corretteGenere = 0;
     let totLgbt = 0, corretteLgbt = 0;
-    let totMulti = 0, corretteMulti = 0;
+    let totEtnie = 0, corretteEtnie = 0;
     let totNeuro = 0, corretteNeuro = 0;
     const distribuzioneFascie = {};
 
     records.forEach(r => {
         const g = r.minigiochi.genere || { punti: 0, totali: 0 };
         const l = r.minigiochi.lgbt || { punti: 0, totali: 0 };
-        const m = r.minigiochi.multi || { punti: 0, totali: 0 };
+        const e = r.minigiochi.video_interactive || { punti: 0, totali: 0 };
         const n = r.minigiochi.neuro || { punti: 0, totali: 0 };
 
         corretteGenere += g.punti;
         totGenere += g.totali;
         corretteLgbt += l.punti;
         totLgbt += l.totali;
-        corretteMulti += m.punti;
-        totMulti += m.totali;
+        corretteEtnie += e.punti;
+        totEtnie += e.totali;
         corretteNeuro += n.punti;
         totNeuro += n.totali;
 
         distribuzioneFascie[r.etaRange] = (distribuzioneFascie[r.etaRange] || 0) + 1;
     });
 
-    const totalePunti = corretteGenere + corretteLgbt + corretteMulti + corretteNeuro;
-    const totaleDomande = totGenere + totLgbt + totMulti + totNeuro;
+    const totalePunti = corretteGenere + corretteLgbt + corretteEtnie + corretteNeuro;
+    const totaleDomande = totGenere + totLgbt + totEtnie + totNeuro;
 
     return {
         percentualMedia: totaleDomande > 0 ? Math.round((totalePunti / totaleDomande) * 100) : 0,
         genereMedia: totGenere > 0 ? Math.round((corretteGenere / totGenere) * 100) : 0,
         lgbtMedia: totLgbt > 0 ? Math.round((corretteLgbt / totLgbt) * 100) : 0,
-        multiMedia: totMulti > 0 ? Math.round((corretteMulti / totMulti) * 100) : 0,
+        etnieMedia: totEtnie > 0 ? Math.round((corretteEtnie / totEtnie) * 100) : 0,
         neuroMedia: totNeuro > 0 ? Math.round((corretteNeuro / totNeuro) * 100) : 0,
         distribuzioneFascie
     };
+}
+
+// Inizializza e avvia un quiz per la categoria selezionata
+async function startQuiz(categoria) {
+    try {
+        categoriaCorrente = categoria;
+        indiceDomanda = 0;
+        punteggioTotale = 0;
+
+        // Mostra la pagina del quiz (area di gioco)
+        if (typeof showPage === 'function') showPage('page-action');
+
+        // Carica le domande (usa api-handler.js)
+        if (typeof fetchQuizDati === 'function') {
+            domandeCorrenti = await fetchQuizDati(categoria);
+        } else {
+            domandeCorrenti = [];
+        }
+
+        // Se non ci sono domande, mostra avviso e torna alla home
+        if (!domandeCorrenti || domandeCorrenti.length === 0) {
+            alert('Nessuna domanda disponibile per questa categoria.');
+            showPage('page-quiz');
+            return;
+        }
+
+        // Aggiorna UI titolo
+        const titolo = document.getElementById('game-title');
+        if (titolo) {
+            titolo.innerText = categoria === 'video_interactive' ? 'MULTICULTURALITÀ' : 'Quiz';
+        }
+
+        // Avvia la prima domanda
+        mostraDomanda();
+    } catch (err) {
+        console.error('Errore avviando il quiz:', err);
+        alert('Si è verificato un errore nell\'avvio del quiz. Controlla la console.');
+    }
+}
+
+// Esponi funzioni chiave globalmente per gli onclick inline
+try {
+    Object.assign(window, {
+        startQuiz,
+        scaricaReportCompleto,
+        debugSimulaTutto,
+        mostraDomanda,
+        entraFullscreenDaModal,
+        chiudiModale,
+        prossimaDomanda,
+        tornaAllaHome,
+        selezioneMatching,
+        verificaMatchingLGBT,
+        riprovaErroriMatching,
+        fineGioco,
+        avviaGiocoDislessia,
+        mostraInputVerifica,
+        controllaRispostaNeuro,
+        rispondiGenereConosco,
+        rispondiGenereNonConosco,
+        gestisciRispostaLGBT,
+        aggiungiPuntoEApri
+    });
+} catch (err) {
+    // ambiente non-browser o scope limitato
 }

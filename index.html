@@ -64,7 +64,7 @@
                     <div class="card-label">LGBTQ+</div>
                 </button>
 
-                <button class="quiz-card" onclick="startQuiz('multi')">
+                <button class="quiz-card" onclick="startQuiz('video_interactive')">
                     <div class="card-icon">
                         <img src="assets/icone/multiculturalita.png" alt="Multiculturalità">
                     </div>
@@ -110,6 +110,16 @@
         </div>
         
         <div id="options-grid" class="options-container"></div>
+        
+        <div id="video-game-container" class="video-game-container hidden" style="width:100%; max-width: 900px; margin: 0 auto; position: relative; border: 6px solid var(--pop-black); box-shadow: 12px 12px 0 var(--pop-black); border-radius: 24px; overflow: hidden; background: #fff;">
+            <video id="interactive-player" playsinline controls preload="auto" style="display:block; width:100%; height:auto; background:#000;"></video>
+            <div id="video-overlay" class="video-overlay hidden" style="position:absolute; inset:0; z-index: 5; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:20px; background: rgba(255,255,255,0.94);">
+                <h3 id="overlay-question-text" style="margin:0; text-align:center; font-size: clamp(1.25rem, 2.4vw, 2rem); font-weight: 800; color: var(--cri-red); text-transform: uppercase; line-height: 1.15;">
+                    Domanda
+                </h3>
+                <div id="video-options-grid" class="video-options-grid" style="width:100%; display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;"></div>
+            </div>
+        </div>
 
         <div id="skip-wrapper" class="skip-wrapper">
             <button class="btn-skip" onclick="prossimaDomanda()">

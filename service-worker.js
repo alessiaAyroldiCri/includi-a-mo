@@ -1,4 +1,4 @@
-const CACHE_NAME = 'includiamo-v1';
+const CACHE_NAME = 'includiamo-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -15,33 +15,45 @@ const ASSETS_TO_CACHE = [
   './assets/icone/neurodiverista.png'
 ];
 
-// Installazione: salvataggio file nella cache
+// Installazione: salvataggio file nella cache e attivazione immediata
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(ASSETS_TO_CACHE);
+    await self.skipWaiting();
+  })());
 });
 
 // Attivazione e pulizia vecchie cache
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME) {
-          return caches.delete(key);
-        }
-      }));
-    })
-  );
+  event.waitUntil((async () => {
+    const keyList = await caches.keys();
+    await Promise.all(keyList.map((key) => {
+      if (key !== CACHE_NAME) {
+        return caches.delete(key);
+      }
+      return Promise.resolve();
+    }));
+    await self.clients.claim();
+  })());
 });
 
-// Intercettazione richieste: se offline, usa la cache
+// Intercettazione richieste: prima rete, poi cache come fallback
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  event.respondWith((async () => {
+    try {
+      const networkResponse = await fetch(event.request);
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(event.request, networkResponse.clone());
+      return networkResponse;
+    } catch (err) {
+      const cachedResponse = await caches.match(event.request);
+      if (cachedResponse) return cachedResponse;
+      throw err;
+    }
+  })());
 });

@@ -63,3 +63,12 @@ if ('serviceWorker' in navigator) {
 
 // Inizializzazione: assicura che all'avvio si veda la home
 window.onload = () => showPage('page-home');
+
+try {
+    Object.assign(window, {
+        showPage,
+        validaEInizia
+    });
+} catch (err) {
+    // ambiente non-browser o scope limitato
+}

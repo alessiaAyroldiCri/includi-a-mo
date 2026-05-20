@@ -62,6 +62,29 @@ async function fetchQuizDati(categoria) {
             }
         ];
     }
+
+    if (categoria === 'video_interactive') {
+        return [
+            {
+                type: "video_interactive",
+                videoPart1: "assets/video/video1-parte1.mp4",
+                videoPart2: "assets/video/video1-parte2.mp4",
+                freezeImage: "assets/video/freeze1.jpeg",
+                question: "Che lavoro fa?",
+                options: ["Badante", "Call center", "Consulente del lavoro", "Dottoressa"],
+                correctAnswer: "Consulente del lavoro"
+            },
+            {
+                type: "video_interactive",
+                videoPart1: "assets/video/video2-parte1.mp4",
+                videoPart2: "assets/video/video2-parte2.mp4",
+                freezeImage: "assets/video/freeze2.jpeg",
+                question: "Che problemi ha Sonia con i documenti?",
+                options: ["Li ha smarriti", "Non è cittadina italiana", "I minorenni non possono viaggiare", "I genitori non vogliono farla andare in gita"],
+                correctAnswer: "Non è cittadina italiana"
+            }
+        ];
+    }
     
     // Dati di esempio per la NEURODIVERSITÀ
     if (categoria === 'neuro') {
