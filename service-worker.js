@@ -12,7 +12,14 @@ const ASSETS_TO_CACHE = [
   './assets/icone/genere.png',
   './assets/icone/LGBTQ.png',
   './assets/icone/multiculturalita.png',
-  './assets/icone/neurodiverista.png'
+  './assets/icone/neurodiverista.png',
+  // Video assets per offline
+  './assets/video/video1-parte1.mp4',
+  './assets/video/video1-parte2.mp4',
+  './assets/video/video2-parte1.mp4',
+  './assets/video/video2-parte2.mp4',
+  './assets/video/freeze1.jpeg',
+  './assets/video/freeze2.jpeg'
 ];
 
 // Installazione: salvataggio file nella cache e attivazione immediata

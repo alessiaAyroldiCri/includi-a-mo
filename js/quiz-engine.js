@@ -69,6 +69,7 @@ function registraRispostaMinigioco(categoria, dati) {
         const title = document.getElementById('game-title');
         const display = document.getElementById('main-content');
         const videoContainer = document.getElementById('video-game-container');
+        const videoInstructions = document.getElementById('video-instructions');
         const player = document.getElementById('interactive-player');
         const overlay = document.getElementById('video-overlay');
         const questionText = document.getElementById('overlay-question-text');
@@ -78,6 +79,8 @@ function registraRispostaMinigioco(categoria, dati) {
         if (standardOptions) standardOptions.style.display = 'none';
         if (skipWrapper) skipWrapper.style.display = 'none';
         if (videoContainer) videoContainer.classList.remove('hidden');
+        // Mostro le istruzioni solo per il primo video (quando startIndex === 0)
+        if (videoInstructions) videoInstructions.style.display = (startIndex === 0) ? 'block' : 'none';
         if (title) title.innerText = 'MULTICULTURALITÀ';
         if (display) display.textContent = '';
         if (overlay) overlay.classList.add('hidden');
@@ -88,44 +91,100 @@ function registraRispostaMinigioco(categoria, dati) {
         }
 
         const entraInFullscreen = async () => {
-            if (!videoContainer || document.fullscreenElement) return;
-            try { if (videoContainer.requestFullscreen) await videoContainer.requestFullscreen(); } catch (err) { console.warn('Fullscreen non disponibile:', err); }
+            if (!videoContainer || !player) return;
+            
+            // Se siamo già in fullscreen, non fare nulla
+            if (document.fullscreenElement) return;
+            
+            try {
+                // Per iOS: usa il fullscreen nativo del video
+                if (player.webkitEnterFullscreen && typeof player.webkitEnterFullscreen === 'function') {
+                    player.webkitEnterFullscreen();
+                    return;
+                }
+                
+                // Per altri browser (Android, Desktop): fullscreen del container
+                if (videoContainer.requestFullscreen) {
+                    await videoContainer.requestFullscreen({ navigationUI: 'hide' });
+                    return;
+                }
+                
+                // Fallback per webkit browsers
+                if (videoContainer.webkitRequestFullscreen) {
+                    videoContainer.webkitRequestFullscreen();
+                    return;
+                }
+                
+                // Fallback per altri prefissi
+                if (videoContainer.mozRequestFullScreen) {
+                    videoContainer.mozRequestFullScreen();
+                    return;
+                }
+                
+                if (videoContainer.msRequestFullscreen) {
+                    videoContainer.msRequestFullscreen();
+                    return;
+                }
+            } catch (err) {
+                console.warn('Fullscreen non disponibile:', err);
+            }
+        };
+
+        const esciDaFullscreen = async () => {
+            if (!document.fullscreenElement) return;
+            try {
+                if (document.exitFullscreen) {
+                    await document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            } catch (err) {
+                console.warn('Exit fullscreen fallito:', err);
+            }
         };
 
         const playQuestion = (domanda, isSecondVideo = false) => new Promise((resolve) => {
             const onPart1Ended = () => {
                 player.removeEventListener('ended', onPart1Ended);
-                if (overlay) overlay.classList.remove('hidden');
-                questionText.textContent = domanda.question || domanda.Frase || '';
-                optionsGrid.innerHTML = '';
+                
+                // Esci dal fullscreen prima di mostrare l'overlay con la domanda
+                esciDaFullscreen().then(() => {
+                    if (overlay) overlay.classList.remove('hidden');
+                    questionText.textContent = domanda.question || domanda.Frase || '';
+                    optionsGrid.innerHTML = '';
 
-                domanda.options.forEach((opzione) => {
-                    const button = document.createElement('button');
-                    button.type = 'button';
-                    button.className = 'video-option-btn';
-                    button.textContent = opzione;
-                    button.dataset.correct = String(opzione === domanda.correctAnswer);
+                    domanda.options.forEach((opzione) => {
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'video-option-btn';
+                        button.textContent = opzione;
+                        button.dataset.correct = String(opzione === domanda.correctAnswer);
 
-                    const onClick = () => {
-                        const isCorrect = button.dataset.correct === 'true';
-                        if (overlay) overlay.classList.add('hidden');
+                        const onClick = () => {
+                            const isCorrect = button.dataset.correct === 'true';
+                            if (overlay) overlay.classList.add('hidden');
 
-                        const onPart2Ended = () => {
-                            player.removeEventListener('ended', onPart2Ended);
-                            resolve(isCorrect);
+                            const onPart2Ended = () => {
+                                player.removeEventListener('ended', onPart2Ended);
+                                resolve(isCorrect);
+                            };
+
+                            player.addEventListener('ended', onPart2Ended);
+                            player.pause();
+                            player.currentTime = 0;
+                            player.src = domanda.videoPart2 || domanda.videoPart1;
+                            player.load();
+                            player.play().then(() => entraInFullscreen()).catch(err => console.warn('Impossibile avviare la seconda parte:', err));
                         };
 
-                        player.addEventListener('ended', onPart2Ended);
-                        player.pause();
-                        player.currentTime = 0;
-                        player.src = domanda.videoPart2 || domanda.videoPart1;
-                        player.load();
-                        player.play().catch(err => console.warn('Impossibile avviare la seconda parte:', err));
-                    };
-
-                    button.addEventListener('click', onClick, { once: true });
-                    optionsGrid.appendChild(button);
-                });
+                        button.addEventListener('click', onClick, { once: true });
+                        optionsGrid.appendChild(button);
+                    });
+                }).catch(err => console.warn('Errore uscita fullscreen:', err));
             };
 
             const startVideo = () => {
@@ -139,48 +198,40 @@ function registraRispostaMinigioco(categoria, dati) {
 
             // Se è il secondo video, mostra overlay di contesto per 8 secondi prima di partire
             if (isSecondVideo) {
-                const contextOverlay = document.createElement('div');
-                contextOverlay.style.cssText = `
-                    position: absolute;
-                    inset: 0;
-                    z-index: 10;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 20px;
-                    padding: 30px;
-                    background: rgba(255, 255, 255, 0.96);
-                    font-family: 'Lexend', sans-serif;
-                    text-align: center;
-                `;
+                const contextOverlay = document.getElementById('context-overlay-fullscreen');
+                const countdownElement = contextOverlay.querySelector('#context-countdown-timer');
                 
-                contextOverlay.innerHTML = `
-                    <h2 style="margin: 0; font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; color: var(--cri-red); text-transform: uppercase; line-height: 1.1;">
-                        SCUOLA SUPERIORE
-                    </h2>
-                    <p style="margin: 0; font-size: clamp(1.5rem, 4vw, 2.8rem); font-weight: 800; color: var(--cri-red); text-transform: uppercase;">
-                        I° ANNO DI LICEO
-                    </p>
-                    <div style="border-top: 4px solid var(--cri-red); padding-top: 20px; width: 100%; max-width: 500px;">
-                        <p style="margin: 12px 0; font-size: clamp(1.2rem, 3vw, 1.8rem); font-weight: 800; color: var(--pop-black); text-transform: uppercase; line-height: 1.3;">
-                            PAOLO, NATO A BARI<br>DA GENITORI ITALIANI
-                        </p>
-                        <p style="margin: 12px 0; font-size: clamp(1.2rem, 3vw, 1.8rem); font-weight: 800; color: var(--pop-black); text-transform: uppercase; line-height: 1.3;">
-                            SONIA, NATA A BARI<br>DA GENITORI NON ITALIANI
-                        </p>
-                    </div>
-                `;
+                if (contextOverlay) {
+                    contextOverlay.classList.remove('hidden');
+                }
                 
-                videoContainer.appendChild(contextOverlay);
+                // Esci dal fullscreen prima di mostrare l'overlay di contesto
+                esciDaFullscreen().catch(err => console.warn('Errore uscita fullscreen dal contesto:', err));
                 
-                // Rimuovi l'overlay dopo 8 secondi e inizia il video
-                setTimeout(() => {
-                    if (contextOverlay.parentNode) {
-                        contextOverlay.remove();
+                // Countdown per autostart oppure click dell'utente
+                let secondsLeft = 8;
+                const countdownInterval = setInterval(() => {
+                    secondsLeft--;
+                    if (countdownElement) {
+                        countdownElement.textContent = secondsLeft > 0 ? `Inizia tra ${secondsLeft} secondi...` : 'Inizia ora...';
                     }
-                    startVideo();
-                }, 8000);
+                    if (secondsLeft <= 0) {
+                        clearInterval(countdownInterval);
+                        startVideoWithFullscreen();
+                    }
+                }, 1000);
+                
+                // Consenti all'utente di cliccare l'overlay per far partire subito il video
+                const startVideoWithFullscreen = () => {
+                    if (contextOverlay) {
+                        contextOverlay.classList.add('hidden');
+                    }
+                    clearInterval(countdownInterval);
+                    // Piccolo delay per assicurare che l'overlay sia rimosso prima di far partire il fullscreen
+                    setTimeout(() => startVideo(), 50);
+                };
+                
+                contextOverlay.addEventListener('click', startVideoWithFullscreen, { once: true });
             } else {
                 startVideo();
             }
@@ -229,14 +280,42 @@ function registraRispostaMinigioco(categoria, dati) {
 function entraFullscreenDaModal() {
     const videoContainer = document.getElementById('video-game-container');
     const player = document.getElementById('interactive-player');
-    if (!videoContainer) return;
+    if (!videoContainer || !player) return;
 
     const doRequest = async () => {
         try {
-            if (videoContainer.requestFullscreen) await videoContainer.requestFullscreen();
-            else if (videoContainer.webkitRequestFullscreen) videoContainer.webkitRequestFullscreen();
-            // dopo il fullscreen, riproduci il video se è pronto
-            if (player) player.play().catch(err => console.warn('Play dopo fullscreen fallito:', err));
+            // Per iOS: usa il fullscreen nativo del video
+            if (player.webkitEnterFullscreen && typeof player.webkitEnterFullscreen === 'function') {
+                player.webkitEnterFullscreen();
+                return;
+            }
+            
+            // Per altri browser (Android, Desktop): fullscreen del container
+            if (videoContainer.requestFullscreen) {
+                await videoContainer.requestFullscreen({ navigationUI: 'hide' });
+                if (player) player.play().catch(err => console.warn('Play dopo fullscreen fallito:', err));
+                return;
+            }
+            
+            // Fallback per webkit browsers
+            if (videoContainer.webkitRequestFullscreen) {
+                videoContainer.webkitRequestFullscreen();
+                if (player) player.play().catch(err => console.warn('Play dopo fullscreen fallito:', err));
+                return;
+            }
+            
+            // Fallback per altri prefissi
+            if (videoContainer.mozRequestFullScreen) {
+                videoContainer.mozRequestFullScreen();
+                if (player) player.play().catch(err => console.warn('Play dopo fullscreen fallito:', err));
+                return;
+            }
+            
+            if (videoContainer.msRequestFullscreen) {
+                videoContainer.msRequestFullscreen();
+                if (player) player.play().catch(err => console.warn('Play dopo fullscreen fallito:', err));
+                return;
+            }
         } catch (err) {
             console.warn('Fullscreen fallito:', err);
         }
@@ -260,6 +339,7 @@ function statisticaAggiorna(categoria, punti, totali) {
 function resetVideoQuizUI() {
     const videoContainer = document.getElementById('video-game-container');
     const overlay = document.getElementById('video-overlay');
+    const videoInstructions = document.getElementById('video-instructions');
     const player = document.getElementById('interactive-player');
     const pageAction = document.getElementById('page-action');
     const display = document.getElementById('main-content');
@@ -273,6 +353,7 @@ function resetVideoQuizUI() {
 
     if (overlay) overlay.classList.add('hidden');
     if (videoContainer) videoContainer.classList.add('hidden');
+    if (videoInstructions) videoInstructions.style.display = 'none';
     if (pageAction) pageAction.classList.remove('video-mode');
     if (display && display.textContent === '') display.textContent = 'CARICAMENTO...';
 }
@@ -445,10 +526,12 @@ function mostraInputVerifica(corretta) {
 }
 
 function controllaRispostaNeuro(corretta) {
-    const rispostaUtente = document.getElementById('risposta-neuro').value.trim().toLowerCase();
-    const correttaLower = corretta.toLowerCase().trim();
+    // Normalizza sia la risposta che la corretta per evitare problemi Unicode su iOS
+    const rispostaNormalizzata = document.getElementById('risposta-neuro').value.trim().normalize('NFC').replace(/[\u200B\u200C\u200D\uFEFF]/g, '');
+    const rispostaUtente = rispostaNormalizzata.toLowerCase();
+    const correttaLimpa = corretta.normalize('NFC').replace(/[\u200B\u200C\u200D\uFEFF]/g, '').toLowerCase().trim();
     const rispostaOriginale = document.getElementById('risposta-neuro').value.trim();
-    const isCorretta = (rispostaUtente === correttaLower && rispostaUtente !== "");
+    const isCorretta = (rispostaUtente === correttaLimpa && rispostaUtente !== "");
 
     registraRispostaMinigioco('neuro', {
         tipo: 'input-libero',
@@ -484,7 +567,12 @@ function controllaRispostaNeuro(corretta) {
 }
 
 function preparatestoDanzante(testo) {
-    return testo.split('').map(l => {
+    // Normalizza la stringa per rimuovere caratteri invisibili e combinar diacritici
+    const testoNormalizzato = testo.normalize('NFC').trim();
+    // Rimuovi zero-width characters e altri caratteri invisibili
+    const testoLimpo = testoNormalizzato.replace(/[\u200B\u200C\u200D\uFEFF]/g, '');
+    
+    return testoLimpo.split('').map(l => {
         if (l === ' ') return ' ';
         const anim = Math.floor(Math.random() * 3) + 1;
         return `<span class="lettera-danzante anim-${anim}">${l}</span>`;
