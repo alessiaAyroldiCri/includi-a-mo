@@ -71,7 +71,7 @@ async function fetchQuizDati(categoria) {
                 videoPart2: "assets/video/video1-parte2.mp4",
                 freezeImage: "assets/video/freeze1.jpeg",
                 question: "Che lavoro fa?",
-                options: ["Badante", "Call center", "Consulente del lavoro", "Dottoressa"],
+                options: ["Call center", "Dottoressa", "Badante", "Consulente del lavoro"],
                 correctAnswer: "Consulente del lavoro"
             },
             {

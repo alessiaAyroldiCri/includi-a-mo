@@ -92,7 +92,7 @@ function registraRispostaMinigioco(categoria, dati) {
             try { if (videoContainer.requestFullscreen) await videoContainer.requestFullscreen(); } catch (err) { console.warn('Fullscreen non disponibile:', err); }
         };
 
-        const playQuestion = (domanda) => new Promise((resolve) => {
+        const playQuestion = (domanda, isSecondVideo = false) => new Promise((resolve) => {
             const onPart1Ended = () => {
                 player.removeEventListener('ended', onPart1Ended);
                 if (overlay) overlay.classList.remove('hidden');
@@ -128,12 +128,62 @@ function registraRispostaMinigioco(categoria, dati) {
                 });
             };
 
-            player.addEventListener('ended', onPart1Ended, { once: true });
-            player.pause();
-            player.currentTime = 0;
-            player.src = domanda.videoPart1;
-            player.load();
-            player.play().then(() => entraInFullscreen()).catch(err => console.warn('Impossibile avviare la parte1:', err));
+            const startVideo = () => {
+                player.addEventListener('ended', onPart1Ended, { once: true });
+                player.pause();
+                player.currentTime = 0;
+                player.src = domanda.videoPart1;
+                player.load();
+                player.play().then(() => entraInFullscreen()).catch(err => console.warn('Impossibile avviare la parte1:', err));
+            };
+
+            // Se è il secondo video, mostra overlay di contesto per 8 secondi prima di partire
+            if (isSecondVideo) {
+                const contextOverlay = document.createElement('div');
+                contextOverlay.style.cssText = `
+                    position: absolute;
+                    inset: 0;
+                    z-index: 10;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 20px;
+                    padding: 30px;
+                    background: rgba(255, 255, 255, 0.96);
+                    font-family: 'Lexend', sans-serif;
+                    text-align: center;
+                `;
+                
+                contextOverlay.innerHTML = `
+                    <h2 style="margin: 0; font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; color: var(--cri-red); text-transform: uppercase; line-height: 1.1;">
+                        SCUOLA SUPERIORE
+                    </h2>
+                    <p style="margin: 0; font-size: clamp(1.5rem, 4vw, 2.8rem); font-weight: 800; color: var(--cri-red); text-transform: uppercase;">
+                        I° ANNO DI LICEO
+                    </p>
+                    <div style="border-top: 4px solid var(--cri-red); padding-top: 20px; width: 100%; max-width: 500px;">
+                        <p style="margin: 12px 0; font-size: clamp(1.2rem, 3vw, 1.8rem); font-weight: 800; color: var(--pop-black); text-transform: uppercase; line-height: 1.3;">
+                            PAOLO, NATO A BARI<br>DA GENITORI ITALIANI
+                        </p>
+                        <p style="margin: 12px 0; font-size: clamp(1.2rem, 3vw, 1.8rem); font-weight: 800; color: var(--pop-black); text-transform: uppercase; line-height: 1.3;">
+                            SONIA, NATA A BARI<br>DA GENITORI NON ITALIANI
+                        </p>
+                    </div>
+                `;
+                
+                videoContainer.appendChild(contextOverlay);
+                
+                // Rimuovi l'overlay dopo 8 secondi e inizia il video
+                setTimeout(() => {
+                    if (contextOverlay.parentNode) {
+                        contextOverlay.remove();
+                    }
+                    startVideo();
+                }, 8000);
+            } else {
+                startVideo();
+            }
         });
 
         const q1 = domandeCorrenti[startIndex];
@@ -141,11 +191,11 @@ function registraRispostaMinigioco(categoria, dati) {
         const risposte = [];
 
         if (q1) {
-            const r1 = await playQuestion(q1);
+            const r1 = await playQuestion(q1, false);
             risposte.push({ question: q1.question || q1.Frase || '', correct: r1 });
         }
         if (q2) {
-            const r2 = await playQuestion(q2);
+            const r2 = await playQuestion(q2, true);
             risposte.push({ question: q2.question || q2.Frase || '', correct: r2 });
         }
 
@@ -277,18 +327,17 @@ async function mostraDomanda() {
         titolo.innerText = "Lo conosci?"; 
         display.innerText = item.Frase;
         
-        skipWrapper.innerHTML = `
-            <button class="btn-skip" onclick="rispondiGenereNonConosco('${item.Frase.replace(/'/g, "\\'")}', '${item.Spiegazione.replace(/'/g, "\\'")}')">
-                NON LO CONOSCO
-            </button>
-        `;
+        skipWrapper.style.display = "none";
 
         container.innerHTML = `
-            <button class="btn-option primary" onclick="rispondiGenereConosco('${item.Frase.replace(/'/g, "\\'")}', '${item.Spiegazione.replace(/'/g, "\\'")}', 'SI_LO_CONOSCO')">
-                SÌ, LO CONOSCO
+            <button class="btn-option primary" onclick="rispondiGenereConosco('${item.Frase.replace(/'/g, "\\'")}', '${item.Spiegazione.replace(/'/g, "\\'")}', 'SI_LO_CONOSCO_E_USATO')">
+                SÌ, LO CONOSCO E<br>L'HO USATO
             </button>
             <button class="btn-option primary" onclick="rispondiGenereConosco('${item.Frase.replace(/'/g, "\\'")}', '${item.Spiegazione.replace(/'/g, "\\'")}', 'SI_GIA_SENTITO')">
-                SÌ, L'HO GIÀ SENTITO
+                L'HO SENTITO
+            </button>
+            <button class="btn-option primary" onclick="rispondiGenereNonConosco('${item.Frase.replace(/'/g, "\\'")}', '${item.Spiegazione.replace(/'/g, "\\'")}')">
+                NON LO CONOSCO
             </button>
         `;
     }
@@ -485,9 +534,9 @@ function avviaGiocoMatching(termini, descrizioniMescolate, descrizioniOriginali,
                 </div>
             </div>
         </div>
-        <div id="matching-actions" style="text-align: center; margin-top: 20px;">
+        <div id="matching-actions" style="display: flex; gap: 15px; justify-content: center; align-items: center; margin-top: 20px; flex-wrap: wrap;">
             <button class="btn-option primary" onclick="verificaMatchingLGBT()">VERIFICA ABBINAMENTI</button>
-            <button class="btn-skip" onclick="prossimaDomanda()" style="margin-left: 10px;">SALTA</button>
+            <button class="btn-skip" onclick="prossimaDomanda()">SALTA</button>
         </div>
     `;
 

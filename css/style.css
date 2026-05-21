@@ -258,6 +258,8 @@ html, body {
 #page-action.matching-mode .game-area {
     width: 96%;
     max-width: 1400px;
+    align-items: center;
+    justify-content: center;
 }
 
 #page-action.video-mode .text-display,
@@ -268,6 +270,25 @@ html, body {
 
 #options-grid.matching-options {
     display: block;
+}
+
+/* Griglia per opzioni genere (3 bottoni verticali uniformi) */
+#options-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    width: 100%;
+}
+
+/* Assicura che i bottoni genere abbiano altezza uniforme */
+#options-grid .btn-option.primary {
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.3;
+    padding: 20px 15px;
 }
 
 /* La card con la parola */
@@ -383,16 +404,31 @@ html, body {
 }
 
 .btn-skip {
-    background: #f0f0f0;
-    border: 4px solid #ccc;
-    color: #666;
-    padding: 12px 30px;
-    border-radius: 15px;
+    background: var(--cri-red);
+    border: 4px solid var(--pop-black);
+    color: white;
+    padding: 20px 15px;
+    border-radius: 20px;
     font-family: inherit;
     font-weight: 800;
     cursor: pointer;
     text-align: center;
     line-height: 1.2;
+    font-size: 1.2rem;
+    box-shadow: 6px 6px 0px var(--pop-black);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 5px;
+    text-transform: uppercase;
+}
+
+.btn-skip:active {
+    transform: translate(3px, 3px);
+    box-shadow: 2px 2px 0px var(--pop-black);
 }
 
 .btn-skip small {

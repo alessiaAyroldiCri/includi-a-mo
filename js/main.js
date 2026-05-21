@@ -1,6 +1,37 @@
 // Gestione globale dell'utente
 let utenteCorrente = "";
 
+// ========== CONFIGURAZIONE DEBUG ==========
+// Variabile per attivare/disattivare i bottoni debug
+let DEBUG_MODE = false;
+
+// Funzione per attivare la modalità debug
+function enableDebugMode() {
+    DEBUG_MODE = true;
+    const debugButtons = document.getElementById('debug-buttons');
+    if (debugButtons) {
+        debugButtons.style.display = 'flex';
+    }
+    console.log('%c✓ Modalità DEBUG attivata!', 'color: green; font-weight: bold; font-size: 14px;');
+    console.log('%cI bottoni di test sono ora visibili nella pagina "Scegli la sfida".', 'color: green;');
+}
+
+// Funzione per disattivare la modalità debug
+function disableDebugMode() {
+    DEBUG_MODE = false;
+    const debugButtons = document.getElementById('debug-buttons');
+    if (debugButtons) {
+        debugButtons.style.display = 'none';
+    }
+    console.log('%c✗ Modalità DEBUG disattivata.', 'color: red; font-weight: bold; font-size: 14px;');
+}
+
+// Funzione per controllare lo stato della modalità debug
+function getDebugMode() {
+    console.log('Debug Mode:', DEBUG_MODE ? 'ATTIVATO' : 'DISATTIVATO');
+    return DEBUG_MODE;
+}
+
 /**
  * Cambia la visualizzazione tra le diverse sezioni (pagine) dell'app
  * @param {string} pageId - L'ID della sezione da mostrare
@@ -67,7 +98,10 @@ window.onload = () => showPage('page-home');
 try {
     Object.assign(window, {
         showPage,
-        validaEInizia
+        validaEInizia,
+        enableDebugMode,
+        disableDebugMode,
+        getDebugMode
     });
 } catch (err) {
     // ambiente non-browser o scope limitato
