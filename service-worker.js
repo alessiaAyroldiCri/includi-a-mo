@@ -1,4 +1,4 @@
-const CACHE_NAME = 'includiamo-v5';
+const CACHE_NAME = 'includiamo-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -17,9 +17,7 @@ const ASSETS_TO_CACHE = [
   './assets/video/video1-parte1.mp4',
   './assets/video/video1-parte2.mp4',
   './assets/video/video2-parte1.mp4',
-  './assets/video/video2-parte2.mp4',
-  './assets/video/freeze1.jpeg',
-  './assets/video/freeze2.jpeg'
+  './assets/video/video2-parte2.mp4'
 ];
 
 // Installazione: salvataggio file nella cache e attivazione immediata

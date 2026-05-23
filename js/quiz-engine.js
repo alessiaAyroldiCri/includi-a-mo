@@ -208,13 +208,16 @@ function registraRispostaMinigioco(categoria, dati) {
 
             const startVideo = () => {
                 player.addEventListener('ended', onPart1Ended, { once: true });
+                player.pause();
+                player.currentTime = 0;
+                player.src = domanda.videoPart1;
+                player.load();
                 
                 // Gestione degli errori di caricamento video (offline)
-                const handleVideoError = () => {
-                    player.removeEventListener('error', handleVideoError);
+                player.addEventListener('error', () => {
                     console.warn('Video non disponibile (offline):', domanda.videoPart1);
                     
-                    // Crea un placeholder visivo senza dipendere da file esterni
+                    // Crea un placeholder visivo
                     const fallbackContainer = document.createElement('div');
                     fallbackContainer.style.cssText = `
                         width: 100%;
@@ -233,7 +236,7 @@ function registraRispostaMinigioco(categoria, dati) {
                     fallbackContainer.innerHTML = `
                         <div style="font-size: 4rem; margin-bottom: 20px;">📹</div>
                         <h3 style="margin: 0 0 10px 0; font-size: 1.3rem; font-weight: 800;">Video non disponibile</h3>
-                        <p style="margin: 0; font-size: 1rem; opacity: 0.9;">Sei offline - il video non è in cache</p>
+                        <p style="margin: 0; font-size: 1rem; opacity: 0.9;">Sei offline</p>
                         <p style="margin: 20px 0 0 0; font-size: 0.9rem; opacity: 0.7;">Continua in 3 secondi...</p>
                     `;
                     
@@ -242,18 +245,11 @@ function registraRispostaMinigioco(categoria, dati) {
                         playerContainer.replaceChild(fallbackContainer, player);
                     }
                     
-                    // Dopo 3 secondi mostra la domanda
                     setTimeout(() => {
                         if (overlay) overlay.classList.remove('hidden');
                         onPart1Ended();
                     }, 3000);
-                };
-                
-                player.addEventListener('error', handleVideoError, { once: true });
-                player.pause();
-                player.currentTime = 0;
-                player.src = domanda.videoPart1;
-                player.load();
+                }, { once: true });
                 
                 // Richiedi fullscreen PRIMA di fare il play
                 setTimeout(async () => {
