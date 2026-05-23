@@ -152,52 +152,50 @@ function registraRispostaMinigioco(categoria, dati) {
                 player.removeEventListener('ended', onPart1Ended);
                 
                 // Esci dal fullscreen prima di mostrare l'overlay con la domanda
-                esciDaFullscreen().then(() => {
-                    if (overlay) {
-                        overlay.classList.remove('hidden');
-                        // Rendi l'overlay fullscreen
-                        overlay.style.position = 'fixed';
-                        overlay.style.inset = '0';
-                        overlay.style.zIndex = '200';
-                        overlay.style.display = 'flex';
-                    }
-                    questionText.textContent = domanda.question || domanda.Frase || '';
-                    optionsGrid.innerHTML = '';
+                if (overlay) {
+                    overlay.classList.remove('hidden');
+                    // Rendi l'overlay fullscreen
+                    overlay.style.position = 'fixed';
+                    overlay.style.inset = '0';
+                    overlay.style.zIndex = '200';
+                    overlay.style.display = 'flex';
+                }
+                questionText.textContent = domanda.question || domanda.Frase || '';
+                optionsGrid.innerHTML = '';
 
-                    domanda.options.forEach((opzione) => {
-                        const button = document.createElement('button');
-                        button.type = 'button';
-                        button.className = 'video-option-btn';
-                        button.textContent = opzione;
-                        button.dataset.correct = String(opzione === domanda.correctAnswer);
+                domanda.options.forEach((opzione) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'video-option-btn';
+                    button.textContent = opzione;
+                    button.dataset.correct = String(opzione === domanda.correctAnswer);
 
-                        const onClick = () => {
-                            const isCorrect = button.dataset.correct === 'true';
-                            if (overlay) {
-                                overlay.classList.add('hidden');
-                                overlay.style.position = '';
-                                overlay.style.inset = '';
-                                overlay.style.zIndex = '';
-                                overlay.style.display = '';
-                            }
+                    const onClick = () => {
+                        const isCorrect = button.dataset.correct === 'true';
+                        if (overlay) {
+                            overlay.classList.add('hidden');
+                            overlay.style.position = '';
+                            overlay.style.inset = '';
+                            overlay.style.zIndex = '';
+                            overlay.style.display = '';
+                        }
 
-                            const onPart2Ended = () => {
-                                player.removeEventListener('ended', onPart2Ended);
-                                resolve(isCorrect);
-                            };
-
-                            player.addEventListener('ended', onPart2Ended);
-                            player.pause();
-                            player.currentTime = 0;
-                            player.src = domanda.videoPart2 || domanda.videoPart1;
-                            player.load();
-                            player.play().then(() => entraInFullscreen()).catch(err => console.warn('Impossibile avviare la seconda parte:', err));
+                        const onPart2Ended = () => {
+                            player.removeEventListener('ended', onPart2Ended);
+                            resolve(isCorrect);
                         };
 
-                        button.addEventListener('click', onClick, { once: true });
-                        optionsGrid.appendChild(button);
-                    });
-                }).catch(err => console.warn('Errore uscita fullscreen:', err));
+                        player.addEventListener('ended', onPart2Ended);
+                        player.pause();
+                        player.currentTime = 0;
+                        player.src = domanda.videoPart2 || domanda.videoPart1;
+                        player.load();
+                        player.play().catch(err => console.warn('Impossibile avviare la seconda parte:', err));
+                    };
+
+                    button.addEventListener('click', onClick, { once: true });
+                    optionsGrid.appendChild(button);
+                });
             };
 
             const startVideo = () => {
@@ -209,7 +207,6 @@ function registraRispostaMinigioco(categoria, dati) {
                 
                 // Richiedi fullscreen PRIMA di fare il play
                 setTimeout(async () => {
-                    await entraInFullscreen();
                     player.play().catch(err => console.warn('Impossibile avviare il video:', err));
                 }, 50);
             };
@@ -222,9 +219,6 @@ function registraRispostaMinigioco(categoria, dati) {
                 if (contextOverlay) {
                     contextOverlay.classList.remove('hidden');
                 }
-                
-                // Esci dal fullscreen prima di mostrare l'overlay di contesto
-                esciDaFullscreen().catch(err => console.warn('Errore uscita fullscreen dal contesto:', err));
                 
                 // Countdown per autostart oppure click dell'utente
                 let secondsLeft = 8;
@@ -283,16 +277,12 @@ function registraRispostaMinigioco(categoria, dati) {
                 <p style="font-weight:800; text-transform:uppercase;">Punteggio Video Quiz</p>
                 <p style="margin:10px 0; font-size:1.1rem;">Hai totalizzato <strong>${puntiOttenuti}</strong> su <strong>${risposte.length}</strong></p>
                 <div style="display:flex; gap:10px; justify-content:center; margin-top:12px; flex-wrap:wrap;">
-                    <button class="btn-option primary" onclick="entraFullscreenDaModal()" style="min-width:150px;">ENTRA A SCHERMO INTERO</button>
                     <button class="btn-option primary" onclick="chiudiModale()" style="min-width:150px;">CONTINUA</button>
                 </div>
             </div>
         `;
 
-        if (document.fullscreenElement) {
-            try { await document.exitFullscreen(); } catch (err) { console.warn('Impossibile uscire dal fullscreen:', err); }
-        }
-
+        
         apriModale('Risultato', resultHtml, false);
         indiceDomanda = startIndex + risposte.length;
         mostraDomanda();

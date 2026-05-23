@@ -1,4 +1,4 @@
-const CACHE_NAME = 'includiamo-v3';
+const CACHE_NAME = 'includiamo-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -45,12 +45,36 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
-// Intercettazione richieste: prima rete, poi cache come fallback
+// Intercettazione richieste: cache-first per video, network-first per il resto
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
     return;
   }
 
+  const url = new URL(event.request.url);
+  
+  // Cache-first per i video (così rimangono disponibili offline)
+  if (url.pathname.includes('/assets/video/')) {
+    event.respondWith((async () => {
+      try {
+        const cachedResponse = await caches.match(event.request);
+        if (cachedResponse) return cachedResponse;
+        
+        // Se non in cache, prova network e cachea
+        const networkResponse = await fetch(event.request);
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(event.request, networkResponse.clone());
+        return networkResponse;
+      } catch (err) {
+        // Se tutto fallisce, ritorna errore (offline senza cache)
+        console.warn('Video non disponibile:', url.pathname);
+        throw err;
+      }
+    })());
+    return;
+  }
+
+  // Network-first per il resto (HTML, CSS, JS, immagini)
   event.respondWith((async () => {
     try {
       const networkResponse = await fetch(event.request);

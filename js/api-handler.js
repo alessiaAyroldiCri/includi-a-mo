@@ -39,7 +39,7 @@ async function fetchQuizDati(categoria) {
                     { id: 1, nome: "ASESSUALE" },
                     { id: 2, nome: "BISESSUALE" },
                     { id: 3, nome: "CISGENDER" },
-                    { id: 4, nome: "ETEROSEXUALE" },
+                    { id: 4, nome: "ETEROSESSUALE" },
                     { id: 5, nome: "NON BINARIO" },
                     { id: 6, nome: "PANSESSUALE" },
                     { id: 7, nome: "QUEER" },
