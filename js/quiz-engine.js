@@ -153,7 +153,14 @@ function registraRispostaMinigioco(categoria, dati) {
                 
                 // Esci dal fullscreen prima di mostrare l'overlay con la domanda
                 esciDaFullscreen().then(() => {
-                    if (overlay) overlay.classList.remove('hidden');
+                    if (overlay) {
+                        overlay.classList.remove('hidden');
+                        // Rendi l'overlay fullscreen
+                        overlay.style.position = 'fixed';
+                        overlay.style.inset = '0';
+                        overlay.style.zIndex = '200';
+                        overlay.style.display = 'flex';
+                    }
                     questionText.textContent = domanda.question || domanda.Frase || '';
                     optionsGrid.innerHTML = '';
 
@@ -166,7 +173,13 @@ function registraRispostaMinigioco(categoria, dati) {
 
                         const onClick = () => {
                             const isCorrect = button.dataset.correct === 'true';
-                            if (overlay) overlay.classList.add('hidden');
+                            if (overlay) {
+                                overlay.classList.add('hidden');
+                                overlay.style.position = '';
+                                overlay.style.inset = '';
+                                overlay.style.zIndex = '';
+                                overlay.style.display = '';
+                            }
 
                             const onPart2Ended = () => {
                                 player.removeEventListener('ended', onPart2Ended);
@@ -193,7 +206,12 @@ function registraRispostaMinigioco(categoria, dati) {
                 player.currentTime = 0;
                 player.src = domanda.videoPart1;
                 player.load();
-                player.play().then(() => entraInFullscreen()).catch(err => console.warn('Impossibile avviare la parte1:', err));
+                
+                // Richiedi fullscreen PRIMA di fare il play
+                setTimeout(async () => {
+                    await entraInFullscreen();
+                    player.play().catch(err => console.warn('Impossibile avviare il video:', err));
+                }, 50);
             };
 
             // Se è il secondo video, mostra overlay di contesto per 8 secondi prima di partire
@@ -225,10 +243,13 @@ function registraRispostaMinigioco(categoria, dati) {
                 const startVideoWithFullscreen = () => {
                     if (contextOverlay) {
                         contextOverlay.classList.add('hidden');
+                        // Abbassa il z-index dell'overlay dietro il video
+                        contextOverlay.style.zIndex = '-1000';
+                        contextOverlay.style.pointerEvents = 'none';
                     }
                     clearInterval(countdownInterval);
-                    // Piccolo delay per assicurare che l'overlay sia rimosso prima di far partire il fullscreen
-                    setTimeout(() => startVideo(), 50);
+                    // Delay sufficiente per assicurare che l'overlay sia rimosso prima del fullscreen
+                    setTimeout(() => startVideo(), 100);
                 };
                 
                 contextOverlay.addEventListener('click', startVideoWithFullscreen, { once: true });

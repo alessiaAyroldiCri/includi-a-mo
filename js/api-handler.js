@@ -93,7 +93,7 @@ async function fetchQuizDati(categoria) {
                 Frase: "IL VOLONTARIO SOCCORRE CHIUNQUE SENZA DISTINZIONE" 
             },
             { 
-                Frase: "L'INCLUSIONE RENDE LA NOSTRA COMUNITÀ PIÙ FORTE" 
+                Frase: "INCLUDERE OGNUNO CON GENTILEZZA" 
             }
         ];
     }
