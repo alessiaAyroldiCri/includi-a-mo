@@ -92,6 +92,20 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// Monitoraggio dello stato di connessione
+let offlineNotificationShown = false;
+window.addEventListener('online', () => {
+    console.log('✓ Connessione ripristinata');
+    offlineNotificationShown = false;
+});
+
+window.addEventListener('offline', () => {
+    console.log('✗ Sei offline - la webapp continuerà a funzionare con i contenuti in cache');
+    if (!offlineNotificationShown && document.documentElement.lang) {
+        offlineNotificationShown = true;
+    }
+});
+
 // Inizializzazione: assicura che all'avvio si veda la home
 window.onload = () => showPage('page-home');
 

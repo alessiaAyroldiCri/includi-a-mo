@@ -184,8 +184,16 @@ function registraRispostaMinigioco(categoria, dati) {
                             player.removeEventListener('ended', onPart2Ended);
                             resolve(isCorrect);
                         };
+                        
+                        const handlePart2Error = () => {
+                            player.removeEventListener('error', handlePart2Error);
+                            console.warn('Seconda parte del video non disponibile');
+                            // Se fallisce il caricamento della parte 2, considera la risposta già data
+                            resolve(isCorrect);
+                        };
 
                         player.addEventListener('ended', onPart2Ended);
+                        player.addEventListener('error', handlePart2Error, { once: true });
                         player.pause();
                         player.currentTime = 0;
                         player.src = domanda.videoPart2 || domanda.videoPart1;
@@ -200,6 +208,48 @@ function registraRispostaMinigioco(categoria, dati) {
 
             const startVideo = () => {
                 player.addEventListener('ended', onPart1Ended, { once: true });
+                
+                // Gestione degli errori di caricamento video (offline)
+                const handleVideoError = () => {
+                    player.removeEventListener('error', handleVideoError);
+                    console.warn('Video non disponibile (offline):', domanda.videoPart1);
+                    
+                    // Crea un placeholder visivo senza dipendere da file esterni
+                    const fallbackContainer = document.createElement('div');
+                    fallbackContainer.style.cssText = `
+                        width: 100%;
+                        height: 100%;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+                        color: white;
+                        font-family: 'Lexend', sans-serif;
+                        padding: 40px 20px;
+                        box-sizing: border-box;
+                        text-align: center;
+                    `;
+                    fallbackContainer.innerHTML = `
+                        <div style="font-size: 4rem; margin-bottom: 20px;">📹</div>
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.3rem; font-weight: 800;">Video non disponibile</h3>
+                        <p style="margin: 0; font-size: 1rem; opacity: 0.9;">Sei offline - il video non è in cache</p>
+                        <p style="margin: 20px 0 0 0; font-size: 0.9rem; opacity: 0.7;">Continua in 3 secondi...</p>
+                    `;
+                    
+                    const playerContainer = player.parentNode;
+                    if (playerContainer) {
+                        playerContainer.replaceChild(fallbackContainer, player);
+                    }
+                    
+                    // Dopo 3 secondi mostra la domanda
+                    setTimeout(() => {
+                        if (overlay) overlay.classList.remove('hidden');
+                        onPart1Ended();
+                    }, 3000);
+                };
+                
+                player.addEventListener('error', handleVideoError, { once: true });
                 player.pause();
                 player.currentTime = 0;
                 player.src = domanda.videoPart1;

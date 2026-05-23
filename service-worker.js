@@ -1,4 +1,4 @@
-const CACHE_NAME = 'includiamo-v4';
+const CACHE_NAME = 'includiamo-v5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -62,28 +62,46 @@ self.addEventListener('fetch', (event) => {
         
         // Se non in cache, prova network e cachea
         const networkResponse = await fetch(event.request);
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(event.request, networkResponse.clone());
+        if (networkResponse.ok) {
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(event.request, networkResponse.clone());
+        }
         return networkResponse;
       } catch (err) {
-        // Se tutto fallisce, ritorna errore (offline senza cache)
-        console.warn('Video non disponibile:', url.pathname);
-        throw err;
+        console.warn('Video non disponibile:', url.pathname, err);
+        // Se offline e niente in cache, ritorna una risposta vuota senza errore
+        return new Response('', {
+          status: 204,
+          statusText: 'No Content - Offline'
+        });
       }
     })());
     return;
   }
 
-  // Network-first per il resto (HTML, CSS, JS, immagini)
+  // Network-first per il resto (HTML, CSS, JS, immagini) con fallback a cache
   event.respondWith((async () => {
     try {
       const networkResponse = await fetch(event.request);
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(event.request, networkResponse.clone());
+      if (networkResponse.ok) {
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(event.request, networkResponse.clone());
+      }
       return networkResponse;
     } catch (err) {
+      // Se network fallisce, prova la cache
       const cachedResponse = await caches.match(event.request);
       if (cachedResponse) return cachedResponse;
+      
+      // Se nemmeno la cache ha il file, ritorna una risposta di fallback
+      if (url.pathname.endsWith('.html')) {
+        return new Response('Offline - Pagina non disponibile', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain' }
+        });
+      }
+      
       throw err;
     }
   })());
